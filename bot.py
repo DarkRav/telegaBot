@@ -1,15 +1,16 @@
 import telebot
 from telebot import types
 import config
+from pymongo import MongoClient
 
 bot = telebot.TeleBot(config.token)
 
 @bot.message_handler(commands=['start'])
-def greeting(command):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard='true', one_time_keyboard='true')
-    markup.row('Найти питомца')
-    markup.row('Я нашел питомца')
-    bot.send_message(command.chat.id, 'Я помогаю людям искать своих пропавших собак.', reply_markup=markup)
+def greeting(message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    button_phone = types.KeyboardButton(text="Отправить номер телефона", request_contact=True)
+    keyboard.add(button_phone)
+    bot.send_message(message.chat.id, "Привет. Я помогаю искать пропавших питомцев. \nЧтобы обеспечить поиск и нахождение, пожалуйста, сообщите нам свои контактные данные", reply_markup=keyboard)
 
 @bot.message_handler(content_types=["text"])
 def repeat_all_messages(message):
@@ -17,6 +18,14 @@ def repeat_all_messages(message):
         bot.send_message(message.chat.id, "Отправьте фото найденого пёсика")
     else:
         bot.send_message(message.chat.id, "stub")
+
+@bot.message_handler(content_types=["contact"])
+def getUserInfo(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard='true', one_time_keyboard='true')
+    markup.row('Найти питомца')
+    markup.row('Я нашел питомца')
+    bot.send_message(message.chat.id, "Мы получили ваши контактные данные.", reply_markup=markup)
+    print("contact= "+str(message.contact))
 
 @bot.message_handler(content_types=['photo'])
 def handle_docs_photo(message):
