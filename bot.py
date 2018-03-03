@@ -70,6 +70,7 @@ def compareDogs(wantedDog, findMode):
     dogs = {}
     imgs = clients.find({"findMode": findMode})
     for img in imgs:
+        img = img["photo"]
         probably = getProbably(wantedDog, img)
         dogs[img] = probably
     print(dogs)
