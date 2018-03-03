@@ -1,10 +1,15 @@
-import telebot
-from telebot import types
-import config
-from pymongo import MongoClient
 import random
 from ast import literal_eval
-import operator
+
+#import PIL
+import numpy as np
+import telebot
+#from PIL import Image
+from keras.applications.resnet50 import ResNet50
+from pymongo import MongoClient
+from telebot import types
+
+import config
 
 bot = telebot.TeleBot(config.token)
 client = MongoClient()
@@ -35,11 +40,14 @@ def repeat_all_messages(message):
         # dogs = {}
         bot.send_message(message.chat.id, "Питомцы, похожие на вашего:")
         for userImages in user:
-            bot.send_message(message.chat.id, "Похожие на эту фотографию:")
-            senderPhoto = clients.find({"photos.path": img["path"]})
             for img in userImages["photos"]:
                 # dogs[img["path"]] = compareDogs(img["path"], "wanted")
                 finded = compareDogs(img["path"], "wanted")
+
+                bot.send_message(message.chat.id, "Похожие на эту фотографию:")
+                print(img["path"])
+                bot.send_photo(message.chat.id, photo=open(img["path"], 'rb'))
+
                 print(finded)
                 for f in finded:
                     print(f)
@@ -105,7 +113,21 @@ def compareDogs(wantedDog, findMode):
     return dogs
 
 def getProbably(dog1, dog2):
-    return random.random()*100
+    imgs = [dog1, dog2]
+    model = ResNet50(weights='imagenet', include_top=False)
+
+    preds_tested = []
+    for im in range(len(imgs)):
+       # img = PIL.Image.open(imgs[im])
+        # добавить извлечение морды
+        img = img.resize((244, 244), Image.ANTIALIAS)
+        img = np.asarray(img)
+
+        x = np.expand_dims(img.copy(), axis=0)
+        preds = model.predict(x)
+        preds_tested.append(preds)
+
+    return np.linalg.norm(preds_tested[0] - preds_tested[1])
 
 if __name__ == '__main__':
     bot.polling(none_stop=True)
